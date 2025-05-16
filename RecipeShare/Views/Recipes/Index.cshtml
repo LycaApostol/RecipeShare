@@ -1,0 +1,165 @@
+﻿@model IEnumerable<RecipeShare.Models.Recipe>
+
+@{
+    ViewData["Title"] = "Recipes";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Recipe Collection</h1>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createRecipeModal" id="openCreateModal">
+            <i class="bi bi-plus-circle"></i> Add New Recipe
+        </button>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form class="d-flex" method="get">
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]" class="form-control me-2" placeholder="Search recipes..." />
+                <select name="category" class="form-select me-2" style="max-width: 200px;">
+                    <option value="">All Categories</option>
+                    @foreach (var category in (ViewData["Categories"] as List<string>) ?? new List<string>())
+                    {
+                        <option value="@category"
+                                selected="@(category == ViewData["CurrentCategory"]?.ToString())">
+                            @category
+                        </option>
+                    }
+                </select>
+                <button type="submit" class="btn btn-outline-primary">Search</button>
+            </form>
+        </div>
+        <div class="col-md-4 text-end">
+            <a asp-action="Index" class="btn btn-outline-secondary">Clear Filters</a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <h4>No recipes found</h4>
+            <p>
+                @if (!string.IsNullOrEmpty(ViewData["CurrentFilter"] as string) || !string.IsNullOrEmpty(ViewData["CurrentCategory"] as string))
+                {
+                    <span>No recipes match your search criteria. Try with different keywords or categories.</span>
+                }
+                else
+                {
+                    <span>There are no recipes yet. Be the first to add one!</span>
+                }
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var recipe in Model)
+            {
+                <div class="col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100">
+                        @if (!string.IsNullOrEmpty(recipe.ImageUrl))
+                        {
+                            <img src="@recipe.ImageUrl" class="card-img-top" alt="@recipe.Title" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <img src="/images/default-recipe.jpg" class="card-img-top" alt="Default Image" style="height: 200px; object-fit: cover;">
+                        }
+
+                        <div class="card-body">
+                            <h5 class="card-title">@recipe.Title</h5>
+                            <p class="card-text">
+                                @recipe.Description.Substring(0, Math.Min(recipe.Description.Length, 100))
+                                @(recipe.Description.Length > 100 ? "..." : "")
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">@recipe.Category</span>
+                                <span class="badge bg-secondary">@recipe.Difficulty</span>
+                                <span class="badge bg-info">@recipe.CookingTimeMinutes min</span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white">
+                            <div class="btn-group w-100">
+                                <button class="btn btn-outline-primary viewRecipeButton" data-id="@recipe.Id">View</button>
+                                <button class="btn btn-outline-secondary editRecipeButton" data-id="@recipe.Id">Edit</button>
+                                <button class="btn btn-outline-danger deleteRecipeButton" data-id="@recipe.Id">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Create Recipe Modal Container -->
+<div id="createModalContainer">
+    @await Html.PartialAsync("_Create", new RecipeShare.Models.Recipe())
+</div>
+
+<!-- Edit Recipe Modal Container -->
+<div id="editModalContainer"></div>
+
+<!-- Delete Recipe Modal Container -->
+<div id="deleteModalContainer"></div>
+
+<!-- Recipe Details Modal -->
+<div class="modal fade" id="recipeDetailsModal" tabindex="-1" aria-labelledby="recipeDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recipeDetailsModalLabel">Recipe Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="recipeDetailsContent">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // View recipe details in modal
+            $(".viewRecipeButton").click(function () {
+                var recipeId = $(this).data("id");
+                $.ajax({
+                    url: '@Url.Action("Details", "Recipes")/' + recipeId,
+                    type: 'GET',
+                    success: function (result) {
+                        $("#recipeDetailsContent").html(result);
+                        $("#recipeDetailsModal").modal("show");
+                    }
+                });
+            });
+
+            // Open edit modal
+            $(".editRecipeButton").click(function () {
+                var recipeId = $(this).data("id");
+                $.ajax({
+                    url: '@Url.Action("Edit", "Recipes")/' + recipeId,
+                    type: 'GET',
+                    success: function (result) {
+                        $("#editModalContainer").html(result);
+                        $("#editRecipeModal").modal("show");
+                    }
+                });
+            });
+
+            // Open delete modal
+            $(".deleteRecipeButton").click(function () {
+                var recipeId = $(this).data("id");
+                $.ajax({
+                    url: '@Url.Action("Delete", "Recipes")/' + recipeId,
+                    type: 'GET',
+                    success: function (result) {
+                        $("#deleteModalContainer").html(result);
+                        $("#deleteRecipeModal").modal("show");
+                    }
+                });
+            });
+        });
+    </script>
+}

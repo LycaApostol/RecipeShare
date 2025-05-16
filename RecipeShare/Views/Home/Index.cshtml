@@ -1,0 +1,112 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@model List<RecipeShare.Models.Recipe>
+
+<div class="text-center mb-5">
+    <h1 class="display-4">Welcome to RecipeShare</h1>
+    <p class="lead">Share your culinary creations and discover new recipes from around the world!</p>
+    <a href="@Url.Action("Index", "Recipes")" class="btn btn-primary btn-lg mt-3">Browse All Recipes</a>
+    <button type="button" class="btn btn-success btn-lg mt-3 ms-2" data-bs-toggle="modal" data-bs-target="#createRecipeModal" id="openCreateModal">
+        Share Your Recipe
+    </button>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <h2 class="mb-4">Latest Recipes</h2>
+
+        <div class="row">
+            @foreach (var recipe in Model)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        @if (!string.IsNullOrEmpty(recipe.ImageUrl))
+                        {
+                            <img src="@recipe.ImageUrl" class="card-img-top" alt="@recipe.Title" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <img src="/images/default-recipe.jpg" class="card-img-top" alt="Default Image" style="height: 200px; object-fit: cover;">
+                        }
+
+                        <div class="card-body">
+                            <h5 class="card-title">@recipe.Title</h5>
+                            <p class="card-text">
+                                @recipe.Description.Substring(0, Math.Min(recipe.Description.Length, 100))
+                                @(recipe.Description.Length > 100 ? "..." : "")
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">@recipe.Category</span>
+                                <span class="text-muted">@recipe.CookingTimeMinutes min</span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white">
+                            <button class="btn btn-outline-primary btn-sm viewRecipeButton" data-id="@recipe.Id">View Recipe</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="bg-light p-4 rounded">
+            <h3>About RecipeShare</h3>
+            <p>RecipeShare is a community-driven cooking website where food enthusiasts can share their favorite recipes and discover new culinary inspirations.</p>
+
+            <h4 class="mt-4">Why Share Your Recipes?</h4>
+            <ul>
+                <li>Preserve family traditions</li>
+                <li>Inspire others with your culinary creations</li>
+                <li>Get feedback and improve your recipes</li>
+                <li>Create a personal digital cookbook</li>
+            </ul>
+
+            <p class="mt-4">
+                <strong>Join our cooking community today!</strong> Share your recipes, explore new dishes, and connect with fellow food lovers.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Create Recipe Modal -->
+<div id="createRecipeModalContainer">
+    @await Html.PartialAsync("~/Views/Recipes/_Create.cshtml", new RecipeShare.Models.Recipe())
+</div>
+
+<!-- Recipe Details Modal -->
+<div class="modal fade" id="recipeDetailsModal" tabindex="-1" aria-labelledby="recipeDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="recipeDetailsModalLabel">Recipe Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="recipeDetailsContent">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // View recipe details in modal
+            $(".viewRecipeButton").click(function () {
+                var recipeId = $(this).data("id");
+                $.ajax({
+                    url: '@Url.Action("Details", "Recipes")/' + recipeId,
+                    type: 'GET',
+                    success: function (result) {
+                        $("#recipeDetailsContent").html(result);
+                        $("#recipeDetailsModal").modal("show");
+                    }
+                });
+            });
+        });
+    </script>
+}

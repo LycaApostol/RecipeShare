@@ -1,0 +1,116 @@
+﻿@model RecipeShare.Models.Recipe
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Title">
+            }
+            else
+            {
+                <img src="/images/default-recipe.jpg" class="img-fluid rounded" alt="Default Recipe Image">
+            }
+        </div>
+        <div class="col-md-6">
+            <h2>@Model.Title</h2>
+            <p class="lead">@Model.Description</p>
+
+            <div class="d-flex justify-content-between mb-3">
+                <span class="badge bg-primary">@Model.Category</span>
+                <span class="badge bg-secondary">@Model.Difficulty</span>
+                <span class="badge bg-info">@Model.CookingTimeMinutes minutes</span>
+            </div>
+
+            <p>
+                <small class="text-muted">
+                    Added on @Model.DateCreated.ToString("MMM dd, yyyy")
+                </small>
+            </p>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h4>Ingredients</h4>
+                </div>
+                <div class="card-body">
+                    @{
+                        var ingredients = Model.Ingredients.Split(new[] { ',', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    }
+                    <ul class="list-group list-group-flush">
+                        @foreach (var ingredient in ingredients)
+                        {
+                            <li class="list-group-item">@ingredient.Trim()</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h4>Instructions</h4>
+                </div>
+                <div class="card-body">
+                    @{
+                        var instructions = Model.Instructions.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        int stepNumber = 1;
+                    }
+                    <ol class="list-group list-group-numbered">
+                        @foreach (var instruction in instructions)
+                        {
+                            <li class="list-group-item">
+                                @instruction.Trim().TrimStart('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', ' ')
+                            </li>
+                            stepNumber++;
+                        }
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <div>
+            <button type="button" class="btn btn-primary editRecipeButton" data-id="@Model.Id">Edit</button>
+            <button type="button" class="btn btn-danger deleteRecipeButton" data-id="@Model.Id">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $(".editRecipeButton").click(function () {
+            var recipeId = $(this).data("id");
+            $("#recipeDetailsModal").modal("hide");
+
+            $.ajax({
+                url: '@Url.Action("Edit", "Recipes")/' + recipeId,
+                type: 'GET',
+                success: function (result) {
+                    $("#editModalContainer").html(result);
+                    $("#editRecipeModal").modal("show");
+                }
+            });
+        });
+
+        $(".deleteRecipeButton").click(function () {
+            var recipeId = $(this).data("id");
+            $("#recipeDetailsModal").modal("hide");
+
+            $.ajax({
+                url: '@Url.Action("Delete", "Recipes")/' + recipeId,
+                type: 'GET',
+                success: function (result) {
+                    $("#deleteModalContainer").html(result);
+                    $("#deleteRecipeModal").modal("show");
+                }
+            });
+        });
+    });
+</script>
